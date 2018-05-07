@@ -36,6 +36,10 @@ func (h CreatePaymentHandler) ProcessRequest(w http.ResponseWriter, r *http.Requ
 		return err
 	}
 	transactionHash, err := h.rpcService.MakePayment(input.Ether, input.To)
+	log.Debugf("Transaction Hash Length : %d", len(transactionHash))
+	if err == rpc.ErrCurrentlyUnavailable {
+		return ErrNotAvailable{service: "RPC"}
+	}
 	if err != nil {
 		return err
 	}

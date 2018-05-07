@@ -27,6 +27,14 @@ type NotFoundError struct {
 	model string
 }
 
+type ErrNotAvailable struct {
+	service string
+}
+
+func (e ErrNotAvailable) Error() string {
+	return fmt.Sprintf("%s currently unavailble", e.service)
+}
+
 func (e NotFoundError) Error() string {
 	return fmt.Sprintf("%s not found", e.model)
 }
@@ -40,9 +48,14 @@ func (h WrappedErrorHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		case NotFoundError:
 			w.WriteHeader(http.StatusNotFound)
 			errorMessage = "Not Found"
+			break
 		case *json.UnmarshalTypeError:
 			w.WriteHeader(http.StatusBadRequest)
 			errorMessage = "Invalid Input"
+			break
+		case *ErrNotAvailable:
+			w.WriteHeader(http.StatusServiceUnavailable)
+			errorMessage = fmt.Sprintf("Service %s currently Unavailable", err.(ErrNotAvailable).service)
 		default:
 			log.Errorf("Unknown Error: %v %T", err, err)
 			w.WriteHeader(http.StatusInternalServerError)
